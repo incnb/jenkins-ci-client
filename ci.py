@@ -167,7 +167,11 @@ def console_output(conn, git_info):
     :param conn: An instance of jenkins.Jenkins, as initialized by init_jenkins_conn()
     :param git_info: A dictionary of the working directory repository's git parameters, as returned by load_git_info()
     """
-    last_build_number = conn.get_job_info(git_info['job_name'])['lastCompletedBuild']['number']
+    try:
+        last_build_number = conn.get_job_info(git_info['job_name'])['lastCompletedBuild']['number']
+    except jenkins.NotFoundException:
+        print_error('No builds exist yet for this project.')
+        return
     print_info('Most recent build number for project {job_name} is {build_number}.'.format(
         job_name=git_info['job_name'],
         build_number=last_build_number,
