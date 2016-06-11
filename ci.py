@@ -57,7 +57,7 @@ def load_arguments():
     :return: An object with argument name properties
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument('action', help='Action to perform: one of submit, queue, cancel, list, console')
+    parser.add_argument('action', help='Action to perform: one of {actions}'.format(actions=available_actions().keys()))
     return parser.parse_args()
 
 
@@ -82,7 +82,7 @@ def load_git_info():
         sys.exit(1)
 
 
-def submit_job(conn, git_info):
+def build_job(conn, git_info):
     """
     Submit a job to the Jenkins server.
 
@@ -179,6 +179,19 @@ def console_output(conn, git_info):
     print conn.get_build_console_output(git_info['job_name'], last_build_number)
 
 
+def deploy_job(conn, git_info):
+    """
+    Deploy the specified job via the Jenkins server.
+
+    :param conn: An instance of jenkins.Jenkins, as initialized by init_jenkins_conn()
+    :param git_info: A dictionary of the working directory repository's git parameters, as returned by load_git_info()
+    """
+    conn.build_job(
+        'deploy--{job_name}'.format(job_name=git_info['job_name']),
+    )
+    print_success('Submitted deployment job to the CI server.')
+
+
 def invalid_input(conn, git_info):
     """
     Generic message if the input task was not recognized.
@@ -189,6 +202,22 @@ def invalid_input(conn, git_info):
     print_error('Unknown action.')
 
 
+def available_actions():
+    """
+    Retrieve a dictionary of all actions exposed to the client.
+
+    :return: A dictionary mapping action names to functions.
+    """
+    return {
+        'build': build_job,
+        'queue': job_queue,
+        'cancel': cancel_job,
+        'list': list_jobs,
+        'console': console_output,
+        'deploy': deploy_job,
+    }
+
+
 def ci():
     """
     Main program. Load the git repository information, initialize a connection to the Jenkins server, and run the
@@ -196,14 +225,7 @@ def ci():
     """
     git_info = load_git_info()
     conn = init_jenkins_conn()
-    func = {
-        'submit': submit_job,
-        'queue': job_queue,
-        'cancel': cancel_job,
-        'list': list_jobs,
-        'console': console_output,
-    }
-    func.get(load_arguments().action, invalid_input)(conn, git_info)
+    available_actions().get(load_arguments().action, invalid_input)(conn, git_info)
 
 
 if __name__ == '__main__':

@@ -1,3 +1,4 @@
+jenkins
 gitpython
 python-jenkins
 termcolor
