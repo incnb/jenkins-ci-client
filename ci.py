@@ -188,8 +188,15 @@ def deploy_job(conn, git_info):
     """
     conn.build_job(
         'deploy--{job_name}'.format(job_name=git_info['job_name']),
+        parameters={
+            'REPO_DIR': os.environ.get('REPO_DIR'),
+            'BRANCH': os.environ.get('BRANCH'),
+        },
     )
-    print_success('Submitted deployment job to the CI server.')
+    print_success('Submitted deployment job to the CI server for branch {deploy_branch} to directory {deploy_dir}.'.format(
+        deploy_branch=os.environ.get('BRANCH', 'master'),
+        deploy_dir=os.environ.get('REPO_DIR', 'default'),
+    ))
 
 
 def invalid_input(conn, git_info):
