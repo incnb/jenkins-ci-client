@@ -186,17 +186,22 @@ def deploy_job(conn, git_info):
     :param conn: An instance of jenkins.Jenkins, as initialized by init_jenkins_conn()
     :param git_info: A dictionary of the working directory repository's git parameters, as returned by load_git_info()
     """
-    env_vars = ['REPO_DIR', 'BRANCH']
+    env_var_defaults = {
+        'REPO_DIR': None,
+        'BRANCH': 'master',
+    }
+    parameters = {
+        env_var: os.environ.get(env_var, default_val)
+        for env_var, default_val in env_var_defaults.items()
+        if os.environ.get(env_var) or default_val
+    }
     conn.build_job(
         'deploy--{job_name}'.format(job_name=git_info['job_name']),
-        parameters={
-            env_var: os.environ.get(env_var)
-            for env_var in filter(os.environ.get, env_vars)
-        },
+        parameters=parameters,
     )
-    print_success('Submitted deployment job to the CI server for branch {deploy_branch} to directory {deploy_dir}.'.format(
-        deploy_branch=os.environ.get('BRANCH', 'master'),
-        deploy_dir=os.environ.get('REPO_DIR', 'default'),
+    print_success('Submitted deployment job for branch {deploy_branch} to directory {deploy_dir}.'.format(
+        deploy_branch=parameters.get('BRANCH', 'default'),
+        deploy_dir=parameters.get('REPO_DIR', 'default'),
     ))
 
 
