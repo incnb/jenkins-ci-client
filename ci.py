@@ -3,36 +3,9 @@ import argparse
 import os
 import sys
 
+import util
 import git
 import jenkins
-from termcolor import cprint
-
-
-def print_info(info):
-    """
-    Print a color-coded informational message.
-
-    :param info: Message to print
-    """
-    cprint('INFO: {info}'.format(info=info), 'yellow')
-
-
-def print_success(success):
-    """
-    Print a color-coded success message.
-
-    :param success: Message to print
-    """
-    cprint(success, 'green')
-
-
-def print_error(error):
-    """
-    Print a color-coded error message.
-
-    :param error: Message to print
-    """
-    cprint('ERROR: {error}'.format(error=error), 'red')
 
 
 def init_jenkins_conn():
@@ -73,12 +46,12 @@ def load_git_info():
             'branch': repo.active_branch.name,
             'job_name': repo.git.working_dir.split('/')[-1],
         }
-        print_info('Job/project ID is {job_name}.'.format(job_name=git_info['job_name']))
-        print_info('Current branch is {branch}.'.format(branch=git_info['branch']))
+        util.print_info('Job/project ID is {job_name}.'.format(job_name=git_info['job_name']))
+        util.print_info('Current branch is {branch}.'.format(branch=git_info['branch']))
         print ''
         return git_info
     except git.InvalidGitRepositoryError:
-        print_error('Could not read the git repository in the current working directory!')
+        util.print_error('Could not read the git repository in the current working directory!')
         sys.exit(1)
 
 
@@ -90,12 +63,12 @@ def build_job(conn, git_info):
     :param git_info: A dictionary of the working directory repository's git parameters, as returned by load_git_info()
     """
     conn.build_job(
-        git_info['job_name'],
+        util.test_job_name(git_info['job_name']),
         parameters={
             'BRANCH': git_info['branch'],
         },
     )
-    print_success('Submitted build job to the CI server.')
+    util.print_success('Submitted build job to the CI server.')
 
 
 def job_queue(conn, git_info):
@@ -137,7 +110,7 @@ def cancel_job(conn, git_info):
         print 'No currently running jobs in queue to cancel.'
     for job in currently_running_jobs:
         print 'Aborting build {build_num} (running on {node}).'.format(build_num=job['number'], node=job['node'])
-        conn.stop_build(git_info['job_name'], job['number'])
+        conn.stop_build(util.test_job_name(git_info['job_name']), job['number'])
 
 
 def list_jobs(conn, git_info):
@@ -168,15 +141,15 @@ def console_output(conn, git_info):
     :param git_info: A dictionary of the working directory repository's git parameters, as returned by load_git_info()
     """
     try:
-        last_build_number = conn.get_job_info(git_info['job_name'])['lastCompletedBuild']['number']
+        last_build_number = conn.get_job_info(util.test_job_name(git_info['job_name']))['lastCompletedBuild']['number']
     except jenkins.NotFoundException:
-        print_error('No builds exist yet for this project.')
+        util.print_error('No builds exist yet for this project.')
         return
-    print_info('Most recent build number for project {job_name} is {build_number}.'.format(
+    util.print_info('Most recent build number for project {job_name} is {build_number}.'.format(
         job_name=git_info['job_name'],
         build_number=last_build_number,
     ))
-    print conn.get_build_console_output(git_info['job_name'], last_build_number)
+    print conn.get_build_console_output(util.test_job_name(git_info['job_name']), last_build_number)
 
 
 def deploy_job(conn, git_info):
@@ -196,10 +169,10 @@ def deploy_job(conn, git_info):
         if os.environ.get(env_var) or default_val
     }
     conn.build_job(
-        'deploy--{job_name}'.format(job_name=git_info['job_name']),
+        util.deploy_job_name(git_info['job_name']),
         parameters=parameters,
     )
-    print_success('Submitted deployment job for branch {deploy_branch} to directory {deploy_dir}.'.format(
+    util.print_success('Submitted deployment job for branch {deploy_branch} to directory {deploy_dir}.'.format(
         deploy_branch=parameters.get('BRANCH', 'default'),
         deploy_dir=parameters.get('REPO_DIR', 'default'),
     ))
@@ -212,7 +185,7 @@ def invalid_input(conn, git_info):
     :param conn: An instance of jenkins.Jenkins, as initialized by init_jenkins_conn()
     :param git_info: A dictionary of the working directory repository's git parameters, as returned by load_git_info()
     """
-    print_error('Unknown action.')
+    util.print_error('Unknown action.')
 
 
 def available_actions():
