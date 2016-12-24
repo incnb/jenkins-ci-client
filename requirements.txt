@@ -1,4 +1,10 @@
-jenkins
-gitpython
-python-jenkins
-termcolor
+gitdb2==2.0.0
+GitPython==2.1.1
+jenkins==1.0.2
+multi-key-dict==2.0.3
+pbr==1.10.0
+PyInstaller==3.2
+python-jenkins==0.4.13
+six==1.10.0
+smmap2==2.0.1
+termcolor==1.1.0

@@ -1,4 +1,8 @@
+all:
+	pyinstaller --onefile --hidden-import=urllib2 ci.py
+
+bootstrap:
+	pip install -r requirements.txt
+
 install:
-	sudo pip install -r requirements.txt
-	sudo cp ci.py /usr/local/bin/ci
-	sudo chmod +x /usr/local/bin/ci
+	cp dist/ci /usr/local/bin/ci

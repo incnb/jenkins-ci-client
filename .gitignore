@@ -1,3 +1,14 @@
+# IDE
 .idea
+
+# Virtualenv
+env
+
+# Build artifacts
+build/
+dist/
+ci.spec
+
+# Temporary files
 *.pyc
 *.swp
