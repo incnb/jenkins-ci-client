@@ -6,4 +6,5 @@ virtualenv env
 source env/bin/activate
 
 make bootstrap
+make lint
 make
